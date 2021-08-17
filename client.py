@@ -17,7 +17,7 @@ def receive():
 		try:
 			msg = client_socket.recv(BUFSIZ)#.decode("utf8")
 			msg_list.insert(tkinter.END, asymmetric.do_decrypt(msg, private_key))
-			with open('messages_%s.txt' % chatname, 'ab') as msgf:
+			with open('db/messages_%s.txt' % chatname, 'ab') as msgf:
 				msgf.write(symmetric.do_encrypt(bytes(inpass, 'utf8'), asymmetric.do_decrypt(msg, private_key), salt) + "\n".encode('utf8'))
 		except OSError:  # Possibly client has left the chat.
 			break
@@ -46,7 +46,7 @@ my_msg = tkinter.StringVar()  # For the messages to be sent.
 # my_msg.set("Type your messages here.")
 scrollbar = tkinter.Scrollbar(messages_frame)  # To navigate through past messages.
 # Following will contain the messages.
-msg_list = tkinter.Listbox(messages_frame, height=15, width=50, yscrollcommand=scrollbar.set)
+msg_list = tkinter.Listbox(messages_frame, height=30, width=100, yscrollcommand=scrollbar.set)
 scrollbar.pack(side=tkinter.RIGHT, fill=tkinter.Y)
 msg_list.pack(side=tkinter.LEFT, fill=tkinter.BOTH)
 msg_list.pack()
@@ -62,32 +62,28 @@ top.protocol("WM_DELETE_WINDOW", on_closing)
 
 if input('Would you like to create a new chat? (y/n) ').lower() == 'y':
 	chatname = input("What would you like to name this chat? ")
-	with open('messages_%s.txt' % chatname, 'w') as msgf:
+	with open('db/messages_%s.txt' % chatname, 'w') as msgf:
 		pass
 	inpass = getpass.getpass("Enter a password: ")
 	while getpass.getpass("Confirm a password: ") != inpass:
 		inpass = input("Enter a password: ")
-	with open('hash_%s.txt' % chatname, 'w') as hashf:
+	with open('db/hash_%s.txt' % chatname, 'w') as hashf:
 		hashf.write((pbkdf2_sha256.hash(inpass)))
-	with open('salt_%s.txt' % chatname, 'wb') as saltf:
+	with open('db/salt_%s.txt' % chatname, 'wb') as saltf:
 		salt = os.urandom(16)
 		saltf.write(salt)
 else:
 	chatname = input("What is the name of the chat? ")
 	inpass = getpass.getpass("Enter your password: ")
-	with open('hash_%s.txt' % chatname, 'r') as hashf:
+	with open('db/hash_%s.txt' % chatname, 'r') as hashf:
 		thishash = hashf.read()
-	with open('salt_%s.txt' % chatname, 'rb') as saltf:
+	with open('db/salt_%s.txt' % chatname, 'rb') as saltf:
 		salt = saltf.read()
 	while not pbkdf2_sha256.verify(inpass, thishash):
 		inpass = getpass.getpass("Enter your password: ")
-	with open('messages_%s.txt' % chatname, 'rb') as msgf:
+	with open('db/messages_%s.txt' % chatname, 'rb') as msgf:
 		for msg in msgf.readlines():
 			msg_list.insert(tkinter.END, symmetric.do_decrypt(inpass.encode('utf8'), msg, salt))
-
-
-
-
 
 #----Now comes the sockets part----
 # HOST = input('Enter host: ')
